@@ -1,0 +1,139 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9d6dad6d-f263-4f63-a303-4256625c7312"
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date();\nconst lastFriday = new Date(now);\nlastFriday.setDate(now.getDate() - 7);\n\nreturn [{\n  json: {\n    since: lastFriday.toISOString(),\n    until: now.toISOString()\n  }\n}];"
+      },
+      "name": "Set Dates",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d1c326f2-f5c8-4af9-a05e-e9df676e7e7b"
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "url": "https://api.github.com/repos/devjob4475/template-full-table/commits",
+        "options": {}
+      },
+      "name": "GitHub Commits",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        400,
+        0
+      ],
+      "id": "f3848c02-2095-45d2-8268-7e848568f83b"
+    },
+    {
+      "parameters": {
+        "functionCode": "const commits = items[0].json.map(row => {\n  return `- ${row.commit.message}`;\n});\n\nconst date = items[0].json[0].commit.committer.date.split('T')[0];\n\nreturn [\n  {\n    json: {\n      content: `สรุปงานประจำวันที่ ${date}<br><br>${commits.join('<br>')}`\n    }\n  }\n];\n"
+      },
+      "name": "Summarize Commits",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        608,
+        0
+      ],
+      "id": "536b0422-697f-4475-b102-9f4d8d613d40"
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "requestMethod": "POST",
+        "url": "https://graph.microsoft.com/v1.0/chats/19:5db66fee21494d0888877839564cfeea@thread.v2/messages",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={\n  \"body\": {\n        \"contentType\": \"html\",\n    \"content\": \"{{ $json.content }}\"\n  }\n}\n"
+      },
+      "name": "Send to Teams",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ],
+      "id": "61916706-4bd4-40c7-8fe2-454d3ac8b4e7",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "kEydXvKMTAWrA7Fj",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "Set Dates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Dates": {
+      "main": [
+        [
+          {
+            "node": "GitHub Commits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Commits": {
+      "main": [
+        [
+          {
+            "node": "Summarize Commits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Commits": {
+      "main": [
+        [
+          {
+            "node": "Send to Teams",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "472bf97d-751b-40d6-a739-ba7bd1ef152c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4b8aa7c58621fd9463798ca91b1f9a851ca0bee09f8685200cb8c54418fcb162"
+  },
+  "id": "oWSoX1tc2qsGHT6W",
+  "tags": []
+}
